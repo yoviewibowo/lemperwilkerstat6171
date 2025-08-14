@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Status SLS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+  <h1 class="mb-4 text-center">Dashboard Status SLS</h1>
+
+  <!-- Filter -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <label class="form-label">Filter by PPL</label>
+      <select id="filter-ppl" class="form-select">
+        <option value="">Semua PPL</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Filter by PML</label>
+      <select id="filter-pml" class="form-select">
+        <option value="">Semua PML</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Statistik Ringkas -->
+  <div class="row text-center mb-4" id="summary-cards">
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
+      <h5>Total SLS</h5><h3 id="total-sls">0</h3>
+    </div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
+      <h5>Selesai</h5><h3 id="total-selesai">0</h3>
+    </div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
+      <h5>Belum Selesai</h5><h3 id="total-belum">0</h3>
+    </div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
+      <h5>Total Landmark</h5><h3 id="total-landmark">0</h3>
+    </div></div></div>
+  </div>
+
+  <!-- Pie Chart -->
+  <div class="row mb-4">
+    <div class="col-md-6 mx-auto">
+      <canvas id="chart-status"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabel Data -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table id="data-table" class="table table-striped">
+        <thead>
+          <tr>
+            <th>IDSLS</th>
+            <th>KDKEC</th>
+            <th>NMKEC</th>
+            <th>KDKEL</th>
+            <th>IDKEL</th>
+            <th>NMKEL</th>
+            <th>NMSLS</th>
+            <th>PPL</th>
+            <th>PML</th>
+            <th>STATUS SLS</th>
+            <th>JUMLAH LANDMARK</th>
+            <th>STATUS FINALISASI</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/1aOhkt2XboN2z0UBJDoka3nQIxDm_mFgaEdDvQFWtg5o/export?format=csv&gid=1236917438";
+
+let rawData = [];
+let chartStatus;
+let table;
+let pplSetGlobal = [];
+
+Papa.parse(CSV_URL, {
+  download: true,
+  header: true,
+  complete: function(results) {
+    rawData = results.data.filter(r => r.IDSLS);
+    pplSetGlobal = [...new Set(rawData.map(d => d.PPL).filter(Boolean))].sort();
+    populateFilters(rawData);
+    initTable();
+    updateDashboard();
+  }
+});
+
+function populateFilters(data) {
+  const pmlSet = [...new Set(data.map(d => d.PML).filter(Boolean))].sort();
+
+  const pplDropdown = $('#filter-ppl').empty().append('<option value="">Semua PPL</option>');
+  const pmlDropdown = $('#filter-pml').empty().append('<option value="">Semua PML</option>');
+
+  pplSetGlobal.forEach(p => pplDropdown.append(`<option value="${p}">${p}</option>`));
+  pmlSet.forEach(p => pmlDropdown.append(`<option value="${p}">${p}</option>`));
+
+  $('#filter-ppl').on('change', updateDashboard);
+  $('#filter-pml').on('change', function() {
+    const selectedPML = $(this).val();
+    const filteredPPL = selectedPML
+      ? [...new Set(data.filter(d => d.PML === selectedPML).map(d => d.PPL).filter(Boolean))].sort()
+      : pplSetGlobal;
+
+    pplDropdown.empty().append('<option value="">Semua PPL</option>');
+    filteredPPL.forEach(p => pplDropdown.append(`<option value="${p}">${p}</option>`));
+
+    updateDashboard();
+  });
+}
+
+function getFilteredData() {
+  const ppl = $('#filter-ppl').val();
+  const pml = $('#filter-pml').val();
+  return rawData.filter(d => 
+    (ppl === "" || d.PPL === ppl) &&
+    (pml === "" || d.PML === pml)
+  );
+}
+
+function initTable() {
+  table = $('#data-table').DataTable({
+    data: [],
+    columns: [
+      { data: 'IDSLS' },
+      { data: 'KDKEC' },
+      { data: 'NMKEC' },
+      { data: 'KDKEL' },
+      { data: 'IDKEL' },
+      { data: 'NMKEL' },
+      { data: 'NMSLS' },
+      { data: 'PPL' },
+      { data: 'PML' },
+      { data: 'STATUS SLS' },
+      { data: 'JUMLAH LANDMARK' },
+      { data: 'STATUS FINALISASI' }
+    ]
+  });
+}
+
+function updateDashboard() {
+  const data = getFilteredData();
+  updateSummary(data);
+  updateTable(data);
+  renderChart(data);
+}
+
+function updateSummary(data) {
+  $('#total-sls').text(data.length);
+
+  const selesai = data.filter(d => d["STATUS FINALISASI"]?.toLowerCase() === "sudah difinalisasi").length;
+  $('#total-selesai').text(selesai);
+
+  $('#total-belum').text(data.length - selesai);
+
+  const totalLand = data.reduce((s, d) => s + (+d["JUMLAH LANDMARK"] || 0), 0);
+  $('#total-landmark').text(totalLand);
+}
+
+function updateTable(data) {
+  table.clear();
+  table.rows.add(data);
+  table.draw();
+}
+
+function renderChart(data) {
+  const selesai = data.filter(d => d["STATUS FINALISASI"]?.toLowerCase() === "sudah difinalisasi").length;
+  const belum = data.length - selesai;
+
+  if(chartStatus) chartStatus.destroy();
+  chartStatus = new Chart($('#chart-status')[0], {
+    type: 'pie',
+    data: {
+      labels: ["Selesai", "Belum Selesai"],
+      datasets: [{
+        data: [selesai, belum],
+        backgroundColor: ['#4caf50', '#f44336']
+      }]
+    }
+  });
+}
+</script>
+
+</body>
+</html>

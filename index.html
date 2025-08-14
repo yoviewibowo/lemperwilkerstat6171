@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEMPER WILKERSTAT 6171</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #f79039, #febd26, #ffd635, #ffffff);
+      background-size: 400% 400%;
+      animation: gradientBG 10s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-gray-900">
+
+  <div class="text-center">
+    <h1 class="text-4xl font-bold mb-3 ">LEMPER WILKERSTAT 6171</h1>
+	<h2 class="text-3xl font-bold mb-3 text-white">Laporan Evaluasi & Monitoring Pemetaan Wilayah Kerja Statistik BPS Kota Pontianak</h2>
+	<b></b>
+	<b></b>
+    <p class="mb-10 text-lg opacity-90">Pilih dashboard yang ingin Anda lihat</p>
+
+    <div class="flex flex-col sm:flex-row gap-6 justify-center">
+      <!-- Card 1 -->
+      <a href="lempersls6171.html" class="card bg-white rounded-xl p-6 w-64 text-center">
+        <div class="text-orange-500 text-5xl mb-4">📊</div>
+        <h2 class="text-xl font-semibold mb-2">Status SLS</h2>
+        <p class="text-sm text-gray-600">Lihat progres pengerjaan dan status finalisasi SLS.</p>
+      </a>
+
+      <!-- Card 2 -->
+      <a href="lemperwilkerstat6171.html" class="card bg-white rounded-xl p-6 w-64 text-center">
+        <div class="text-yellow-500 text-5xl mb-4">📈</div>
+        <h2 class="text-xl font-semibold mb-2">LEMPER Wilkerstat</h2>
+        <p class="text-sm text-gray-600">Pantau perkembangan dan data kegiatan Wilkerstat.</p>
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>
